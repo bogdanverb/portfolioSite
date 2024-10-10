@@ -4,9 +4,13 @@
 <div class="container">
     <h2>{{ $portfolio->title }}</h2>
     <p>{{ $portfolio->description }}</p>
-    @if ($portfolio->image_path)
-        <img src="{{ asset('storage/' . $portfolio->image_path) }}" class="img-fluid" alt="Portfolio Image">
+    
+    @if ($portfolio->images)
+        @foreach (json_decode($portfolio->images) as $image)
+            <img src="{{ asset('storage/' . $image) }}" class="img-fluid" alt="Portfolio Image">
+        @endforeach
     @endif
+
     @if ($portfolio->video_path)
         <video width="320" height="240" controls>
             <source src="{{ asset('storage/' . $portfolio->video_path) }}" type="video/mp4">

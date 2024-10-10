@@ -13,9 +13,12 @@ class Portfolio extends Model
         'user_id',
         'title',
         'description',
-        'image_path',
         'video_path',
         'contact_info',
-        'images',
+        'images', // Змінили поле на 'images'
+    ];
+
+    protected $casts = [
+        'images' => 'array', // Перетворюємо JSON в масив
     ];
 }

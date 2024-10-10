@@ -30,7 +30,7 @@ class PortfolioController extends Controller
         $request->validate([
             'title' => 'required',
             'description' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Зміна для підтримки масиву зображень
             'video' => 'nullable|mimes:mp4,mov,avi,wmv|max:20480',
         ]);
 
@@ -39,8 +39,13 @@ class PortfolioController extends Controller
         $portfolio->title = $request->title;
         $portfolio->description = $request->description;
 
-        if ($request->hasFile('image')) {
-            $portfolio->image_path = $request->file('image')->store('portfolios/images', 'public');
+        // Обробка декількох зображень
+        if ($request->hasFile('images')) {
+            $imagePaths = [];
+            foreach ($request->file('images') as $image) {
+                $imagePaths[] = $image->store('portfolios/images', 'public');
+            }
+            $portfolio->images = json_encode($imagePaths); // Зберігаємо масив шляхів у JSON форматі
         }
 
         if ($request->hasFile('video')) {
@@ -56,16 +61,19 @@ class PortfolioController extends Controller
     public function edit($id)
     {
         $portfolio = Portfolio::findOrFail($id);
+        $portfolio->images = json_decode($portfolio->images, true); // Декодування JSON
+
         return view('portfolios.edit', compact('portfolio'));
     }
 
     // Оновити портфоліо в базі даних
+// Оновити портфоліо в базі даних
     public function update(Request $request, $id)
     {
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Зміна для підтримки масиву зображень
             'video' => 'nullable|mimes:mp4,mov,avi,wmv|max:20480',
         ]);
 
@@ -73,13 +81,20 @@ class PortfolioController extends Controller
         $portfolio->title = $request->input('title');
         $portfolio->description = $request->input('description');
 
-        // Збереження нового зображення, якщо воно було завантажено
-        if ($request->hasFile('image')) {
-            // Видалення старого зображення, якщо є
-            if ($portfolio->image_path) {
-                Storage::delete($portfolio->image_path);
+        // Обробка декількох зображень
+        if ($request->hasFile('images')) {
+            // Видалення старих зображень, якщо є
+            if ($portfolio->images) {
+                $oldImages = json_decode($portfolio->images);
+                foreach ($oldImages as $oldImage) {
+                    Storage::delete($oldImage);
+                }
             }
-            $portfolio->image_path = $request->file('image')->store('portfolios/images', 'public');
+            $imagePaths = [];
+            foreach ($request->file('images') as $image) {
+                $imagePaths[] = $image->store('portfolios/images', 'public');
+            }
+            $portfolio->images = json_encode($imagePaths); // Оновлюємо масив шляхів у JSON форматі
         }
 
         // Збереження нового відео, якщо воно було завантажено
@@ -88,7 +103,7 @@ class PortfolioController extends Controller
             if ($portfolio->video_path) {
                 Storage::delete($portfolio->video_path);
             }
-            $portfolio->video_path = $request->file('video')->store('portfolios/videos', 'public');
+            $portfolio->video_path = $request->file('video')->store('portfolios/videos', 'public'); // Збереження нового відео
         }
 
         $portfolio->save();
@@ -104,28 +119,31 @@ class PortfolioController extends Controller
     }
 
     // Генерація QR-коду
-public function generateQR($id)
-{
-    // Знайти портфоліо за ID
-    $portfolio = Portfolio::findOrFail($id);
+    public function generateQR($id)
+    {
+        // Знайти портфоліо за ID
+        $portfolio = Portfolio::findOrFail($id);
 
-    // Генерація даних для QR-коду (наприклад, посилання на деталі портфоліо)
-    $qrCodeData = route('portfolios.show', ['portfolio' => $portfolio->id]);
+        // Генерація даних для QR-коду (наприклад, посилання на деталі портфоліо)
+        $qrCodeData = route('portfolios.show', ['portfolio' => $portfolio->id]);
 
-    // Генерація QR-коду
-    $qrCodeImage = QrCode::size(300)->generate($qrCodeData);
+        // Генерація QR-коду
+        $qrCodeImage = QrCode::size(300)->generate($qrCodeData);
 
-    // Повертаємо QR-код як HTML
-    return response()->view('qr_code', ['qrCodeImage' => $qrCodeImage]);
-}
+        // Повертаємо QR-код як HTML
+        return response()->view('qr_code', ['qrCodeImage' => $qrCodeImage]);
+    }
 
     // Видалити портфоліо
     public function destroy($id)
     {
         $portfolio = Portfolio::findOrFail($id);
         // Видалення зображення та відео, якщо вони існують
-        if ($portfolio->image_path) {
-            Storage::delete($portfolio->image_path);
+        if ($portfolio->images) {
+            $oldImages = json_decode($portfolio->images);
+            foreach ($oldImages as $oldImage) {
+                Storage::delete($oldImage);
+            }
         }
         if ($portfolio->video_path) {
             Storage::delete($portfolio->video_path);

@@ -14,8 +14,8 @@
             <textarea class="form-control" name="description" required></textarea>
         </div>
         <div class="form-group">
-            <label for="image">Завантажити зображення</label>
-            <input type="file" class="form-control" name="image" accept="image/*">
+            <label for="images">Завантажити зображення</label>
+            <input type="file" class="form-control" name="images[]" accept="image/*" multiple> <!-- Додаємо атрибут multiple -->
         </div>
         <div class="form-group">
             <label for="video">Завантажити відео</label>

@@ -19,10 +19,10 @@
     .card-text {
         font-size: 1rem; /* Звичайний розмір тексту */
     }
-    .btn-info, .btn-secondary {
+    .btn-info, .btn-warning, .btn-danger, .btn-secondary {
         margin-right: 10px; /* Проміжок між кнопками */
     }
-    .btn-info:hover, .btn-secondary:hover {
+    .btn-info:hover, .btn-warning:hover, .btn-danger:hover, .btn-secondary:hover {
         opacity: 0.8; /* Легка зміна прозорості при наведенні */
     }
     .card-body img, .card-body video {
@@ -44,8 +44,10 @@
                     <h5 class="card-title">{{ $portfolio->title }}</h5>
                     <p class="card-text">{{ $portfolio->description }}</p>
                     
-                    @if ($portfolio->image_path)
-                        <img src="{{ asset('storage/' . $portfolio->image_path) }}" class="img-fluid" alt="Portfolio Image">
+                    @if ($portfolio->images)
+                        @foreach (json_decode($portfolio->images) as $image)
+                            <img src="{{ asset('storage/' . $image) }}" class="img-fluid" alt="Portfolio Image">
+                        @endforeach
                     @endif
                     
                     @if ($portfolio->video_path)
@@ -57,6 +59,12 @@
 
                     <div class="mt-3">
                         <a href="{{ route('portfolios.show', $portfolio->id) }}" class="btn btn-info">Переглянути</a>
+                        <a href="{{ route('portfolios.edit', $portfolio->id) }}" class="btn btn-warning">Редагувати</a>
+                        <form action="{{ route('portfolios.destroy', $portfolio->id) }}" method="POST" style="display:inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Ви впевнені, що хочете видалити це портфоліо?');">Видалити</button>
+                        </form>
                         <a href="{{ route('portfolios.qr', $portfolio->id) }}" class="btn btn-secondary">Згенерувати QR-код</a>
                     </div>
                 </div>

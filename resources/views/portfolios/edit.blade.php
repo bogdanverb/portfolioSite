@@ -18,10 +18,12 @@
         </div>
 
         <div class="form-group">
-            <label for="image">Зображення:</label>
-            <input type="file" id="image" name="image" class="form-control" accept="image/*">
-            @if ($portfolio->image)
-                <img src="{{ asset('storage/' . $portfolio->image) }}" alt="Current Image" width="150" class="mt-2">
+            <label for="images">Зображення:</label>
+            <input type="file" id="images" name="images[]" class="form-control" accept="image/*" multiple>
+            @if ($portfolio->images)
+                @foreach ($portfolio->images as $image)
+                    <img src="{{ asset('storage/' . $image) }}" alt="Current Image" width="150" class="mt-2">
+                @endforeach
             @endif
         </div>
 
